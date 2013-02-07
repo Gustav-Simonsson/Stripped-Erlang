@@ -1,1 +1,15 @@
-Bash script for creating a small Erlang release
+Bash script for creating a small Erlang release.
+
+Example:
+
+wget http://www.erlang.org/download/otp_src_R15B03-1.tar.gz
+./minimal_erlang.sh -s -e otp_src_R15B03-1.tar.gz
+
+Notes:
+The script will unpack the Erlang/OTP tarball and build a Erlang release.
+To speed things up:
+export MAKEFLAGS=-jX
+where X is number of logical cores + 2.
+
+You can also manually remove unneeded OTP apps in the lib folder in the created
+release directory.

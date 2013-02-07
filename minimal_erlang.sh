@@ -7,6 +7,7 @@ SE_XCOMP_FILE=unset
 SE_DO_BUILD=unset
 SE_ERLANG_SOURCE_FILE=unset
 SE_SMP_ENABLED=unset
+SE_RELEASE_DIR=stripped_release
 
 # Internal functions
 usage()
@@ -76,6 +77,7 @@ do
             ;;
         e )
             SE_ERLANG_SOURCE_FILE=${OPTARG}
+            SE_DO_BUILD=yes
             ;;
         s )
             SE_SMP_ENABLED=true
@@ -109,7 +111,7 @@ fi
 # 3. Enter directory and build the source.
 SE_OTP_SOURCE_DIR_NAME=`tar -tf ${SE_ERLANG_SOURCE_FILE} | grep -o '^[^/]\+' | sort -u`
 cd $SE_BUILD_DIR
-mkdir release
+mkdir $SE_RELEASE_DIR
 SE_BUILD_DIR_ABS=$PWD
 SE_OTP_SOURCE_DIR_ABS=$SE_BUILD_DIR_ABS/$SE_OTP_SOURCE_DIR_NAME
 cd $SE_OTP_SOURCE_DIR_ABS
@@ -117,12 +119,11 @@ cd $SE_OTP_SOURCE_DIR_ABS
 export ERL_TOP=$SE_OTP_SOURCE_DIR_ABS
 ./configure
 make
-make RELEASE_ROOT=$SE_BUILD_DIR_ABS/release release
-echo "pwd: ${PWD}"
+make RELEASE_ROOT=$SE_BUILD_DIR_ABS/$SE_RELEASE_DIR release
 
 # 4. Strip beams
-erl -eval "beam_lib:strip_release('$SE_BUILD_DIR_ABS/release')" -s init stop > /dev/null
-cd $SE_BUILD_DIR_ABS/release
+erl -eval "beam_lib:strip_release('$SE_BUILD_DIR_ABS/$SE_RELEASE_DIR')" -s init stop > /dev/null
+cd $SE_BUILD_DIR_ABS/$SE_RELEASE_DIR
 
 # 5. Strip binaries (using correct tool chain)
 #TODO: use toolchain specified in xcomp.conf or from CLI option
@@ -163,9 +164,9 @@ SE_LIBS=$(ls)
 
 for SE_APP in $SE_LIBS; do
     if [ "${SE_APP##*.}" == "ez" ]; then
-        print "Skipping $SE_APP, already compressed"
+        echo "Skipping $SE_APP, already compressed"
     else
-        print "Compressing $SE_APP"
+        echo "Compressing $SE_APP"
         # Skip priv directories, they need to exist on disk
         zip -0 -q -r ${SE_APP}.zip $SE_APP -x $SE_APP/priv/\*
         mv ${SE_APP}.zip ${SE_APP}.ez
@@ -195,7 +196,7 @@ sed -i 's/ln -s ct_run run_test//' Install
 cd ../..
 SE_TARBALL_PREFIX=minimal_erlang_$SE_OTP_SOURCE_DIR_NAME_$SE_TIMESTAMP
 mkdir $SE_TARBALL_PREFIX
-cp -r $SE_BUILD_DIR/release $SE_TARBALL_PREFIX/
+cp -r $SE_BUILD_DIR/$SE_RELEASE_DIR $SE_TARBALL_PREFIX/
 echo "
 
 Installation:
@@ -211,6 +212,8 @@ if [ "$SE_DEBUG_ENABLED" != yes ]
 then
     rm -rf $SE_BUILD_DIR
 fi
+
+echo "Done. Check README in $SE_TARBALL_PREFIX folder/tarball."
 
 # TODO (on target system):
 # 1. Unpack archive at preffered location (this will be $ERL_ROOT)
