@@ -6,7 +6,11 @@ wget http://www.erlang.org/download/otp_src_R15B03-1.tar.gz
 ./minimal_erlang.sh -s -e otp_src_R15B03-1.tar.gz
 
 Notes:
-The script will unpack the Erlang/OTP tarball and build a Erlang release.
+The script will unpack the Erlang/OTP tarball and build a Erlang release
+from source. You may want to have checked that the build configuration step
+works before running the script. 
+See chapter 3.5 in http://www.erlang.org/doc/installation_guide/INSTALL.html
+
 To speed things up:
 export MAKEFLAGS=-jX
 where X is number of logical cores + 2.
